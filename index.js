@@ -12,10 +12,11 @@ const morgan = require("morgan");
 
 const app = express();
 const port = process.env.PORT || 3176;
-const sslPort = process.env.PORT || 3443;
+const sslPort = process.env.SSLPORT || 3443;
 const poolsRouter = require('./routes/pools');
 const contractsRouter = require('./routes/contracts');
 const tokensRouter = require('./routes/tokens');
+const spyRouter = require('./routes/spy');
 
 const helmet = require('helmet');
 
@@ -57,6 +58,7 @@ app.use(cors({
 app.use('/pools', poolsRouter);
 app.use('/contracts', contractsRouter);
 app.use('/tokens', tokensRouter);
+app.use('/spytokens', spyRouter);
 // Proxy endpoints
 app.use('/figment-lcd', createProxyMiddleware({
   target: API_SERVICE_URL,
@@ -71,14 +73,6 @@ app.use('/figment-rpc', createProxyMiddleware({
   changeOrigin: true,
   pathRewrite: {
       [`^/figment-rpc`]: '',
-  },
-}));
-
-app.use('/com-api-proxy', createProxyMiddleware({
-  target: SCRT_PUB_LCD,
-  changeOrigin: true,
-  pathRewrite: {
-      [`^/com-api-proxy`]: '',
   },
 }));
 

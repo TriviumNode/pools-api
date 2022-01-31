@@ -8,6 +8,8 @@ const path = require("path");
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const morgan = require("morgan");
 
+require('dotenv').config()
+
 //process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 
 const app = express();
@@ -19,17 +21,6 @@ const tokensRouter = require('./routes/tokens');
 const spyRouter = require('./routes/spy');
 
 const helmet = require('helmet');
-
-var sslOptions = {
-  key: fs.readFileSync(path.resolve(__dirname, "./key.pem")),
-  cert: fs.readFileSync(path.resolve(__dirname, "./cert.pem"))
-};
-
-const API_SERVICE_URL = "https://secret-2--lcd--archive.datahub.figment.io/apikey/6ad1168e023d1c7b5dca38b9fdfea7d1";
-const RPC_SERVICE_URL = "https://secret-2--rpc--archive.datahub.figment.io/apikey/6ad1168e023d1c7b5dca38b9fdfea7d1";
-
-const SCRT_PUB_LCD = "http://beta-api.scrt.network"
-const SCRT_PUB_RPC = "http://beta-api.scrt.network:26657"
 
 // Logging
 //app.use(morgan('dev'));
@@ -59,22 +50,6 @@ app.use('/pools', poolsRouter);
 app.use('/contracts', contractsRouter);
 app.use('/tokens', tokensRouter);
 app.use('/spytokens', spyRouter);
-// Proxy endpoints
-app.use('/figment-lcd', createProxyMiddleware({
-  target: API_SERVICE_URL,
-  changeOrigin: true,
-  pathRewrite: {
-      [`^/figment-lcd`]: '',
-  },
-}));
-
-app.use('/figment-rpc', createProxyMiddleware({
-  target: RPC_SERVICE_URL,
-  changeOrigin: true,
-  pathRewrite: {
-      [`^/figment-rpc`]: '',
-  },
-}));
 
 app.use(bodyParser.json());
 app.use(
@@ -94,8 +69,17 @@ app.get('/', (req, res) => {
 
 http.createServer(app).listen(port);
 console.log(`Example app listening at http://localhost:${port}`)
-https.createServer(sslOptions, app).listen(sslPort);
-console.log(`Example app listening at http://localhost:${sslPort}`)
+
+if (process.env.USE_SSL === 'true'){
+  console.log(process.env.USE_SSL)
+  var sslOptions = {
+    key: fs.readFileSync(path.resolve(__dirname, "./key.pem")),
+    cert: fs.readFileSync(path.resolve(__dirname, "./cert.pem"))
+  };
+  https.createServer(sslOptions, app).listen(sslPort);
+  console.log(`Example app listening at http://localhost:${sslPort}`)
+}
+
 
 
 

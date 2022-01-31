@@ -6,10 +6,10 @@ const config = require('../config');
 
 let pool  = mysql.createPool({
   connectionLimit : 10,
-  host            : "localhost",
-  user            : "liquidityreader",
-  password        : "localpassword",
-  database        : "scrt_contracts"
+  host            : process.env.HOST,
+  user            : process.env.USER,
+  password        : process.env.PASSWORD,
+  database        : process.env.DATABASE
 });
 
 /*

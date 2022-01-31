@@ -63,17 +63,23 @@ async function queryInfo(address, queryJs) {
   const result = helper.emptyOrRows(rows);
   console.log(result.insertId);
 
-  const snip20 = await queryJs.queryContractSmart(address, {token_info: {}})
-  if (snip20.token_info.decimals) {
-    await setSnip20(address, snip20.token_info)
+  let snip20;
+  try {
+    snip20 = await queryJs.queryContractSmart(address, {token_info: {}})
+    if (snip20.token_info.decimals) {
+      await setSnip20(address, snip20.token_info)
+    }
+  } catch {
+    null;
   }
+
   return [{
     id: result.insertId,
     address: data.address,
     label: data.label,
     code_id: data.codeId,
     creator: data.creator,
-    name: snip20.token_info?.name || null
+    name: snip20?.token_info?.name || null
   }]
 
 }

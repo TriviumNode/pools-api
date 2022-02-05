@@ -1,9 +1,12 @@
+
 const db = require('./db');
 const pool = require('./db');
 const helper = require('../helper');
 const config = require('../config');
 const app = require('../index');
 var request = require('request');
+const { queryInfo } = require('./secret.js')
+
 
 async function getMultiple(page = 1){
   const offset = helper.getOffset(page, config.listPerPage);
@@ -23,6 +26,34 @@ async function getMultiple(page = 1){
   }
 }
 
+async function getSingle(input, queryJs){
+  const rows = await db.query(
+    `Select id, address, symbol, decimals, creator, name, image, coingecko_id, label as contract_label
+    from contracts
+    where address like ?`,
+    [input]
+  );
+  const data = helper.emptyOrRows(rows);
+  console.log(data[0]);
+  if (data.length && data[0].symbol){
+    return {
+      data
+    }
+  } else if (data.length) {
+    throw("not a token")
+  } else {
+    const res = await queryInfo(input, queryJs, true);
+    console.log(res);
+    return {
+      data: res
+    }
+  }
+
+
+
+}
+
+/*
 async function getSingle(input){
       const rows = await db.query(
         `Select id, address, symbol, decimals, creator, name, image, coingecko_id, label as contract_label
@@ -43,6 +74,7 @@ async function getSingle(input){
       }
 }
 
+*/
 
 async function getBySymbol(input){
   const rows = await db.query(

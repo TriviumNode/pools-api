@@ -4,6 +4,7 @@ const helper = require('../helper');
 const config = require('../config');
 const app = require('../index');
 var request = require('request');
+const {queryInfo} = require('./secret.js');
 
 async function getMultiple(page = 1){
   const offset = helper.getOffset(page, config.listPerPage);
@@ -50,52 +51,6 @@ async function getSingle(input, queryJs){
       */
 
 
-}
-
-async function queryInfo(address, queryJs) {
-  const data = await queryJs.getContract(address)
-  
-  const rows = await db.query(
-    `INSERT INTO contracts (code_id, creator, label, address)
-    VALUES (?, ?, ?, ?);`,
-    [data.codeId, data.creator, data.label, data.address]
-  );
-  const result = helper.emptyOrRows(rows);
-  console.log(result.insertId);
-
-  let snip20;
-  try {
-    snip20 = await queryJs.queryContractSmart(address, {token_info: {}})
-    if (snip20.token_info.decimals) {
-      await setSnip20(address, snip20.token_info)
-    }
-  } catch {
-    null;
-  }
-
-  return [{
-    id: result.insertId,
-    address: data.address,
-    label: data.label,
-    code_id: data.codeId,
-    creator: data.creator,
-    name: snip20?.token_info?.name || null
-  }]
-
-}
-
-async function setSnip20(address, tokenInfo){
-  const rows = await db.query(
-    `UPDATE contracts SET
-      snip20=1,
-      decimals=?,
-      symbol=?,
-      name=?
-    WHERE address=?;`,
-    [tokenInfo.decimals, tokenInfo.symbol, tokenInfo.name, address]
-  );
-  const result = helper.emptyOrRows(rows);
-  console.log(result);
 }
 
 async function getByLabel(input){

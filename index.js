@@ -19,6 +19,7 @@ const poolsRouter = require('./routes/pools');
 const contractsRouter = require('./routes/contracts');
 const tokensRouter = require('./routes/tokens');
 const spyRouter = require('./routes/spy');
+const fixupRouter = require('./routes/fixup');
 
 const helmet = require('helmet');
 
@@ -50,6 +51,7 @@ app.use('/pools', poolsRouter);
 app.use('/contracts', contractsRouter);
 app.use('/tokens', tokensRouter);
 app.use('/spytokens', spyRouter);
+app.use('/adminfix', fixupRouter);
 
 app.use(bodyParser.json());
 app.use(

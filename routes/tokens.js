@@ -1,6 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const tokens = require('../services/tokens');
+const { CosmWasmClient } = require("secretjs");
+
+const queryJs = new CosmWasmClient(process.env.REST_URL);
 
 /* GET tokens. */
 router.get('/', async function(req, res, next) {
@@ -15,7 +18,7 @@ router.get('/', async function(req, res, next) {
 /* GET single contract */
 router.get('/address/:id', async function(req, res, next) {
   try {
-    res.json(await tokens.getSingle(req.params.id));
+    res.json(await tokens.getSingle(req.params.id, queryJs));
   } catch (err) {
     console.error(`Error while getting token `, err.message);
     next(err);

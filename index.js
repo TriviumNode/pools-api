@@ -22,6 +22,7 @@ const poolsRouter = require('./routes/pools');
 const contractsRouter = require('./routes/contracts');
 const tokensRouter = require('./routes/tokens');
 const spyRouter = require('./routes/spy');
+const nodesRouter = require('./routes/nodes');
 
 const helmet = require('helmet');
 
@@ -53,6 +54,7 @@ app.use('/pools', poolsRouter);
 app.use('/contracts', contractsRouter);
 app.use('/tokens', tokensRouter);
 app.use('/spytokens', spyRouter);
+app.use('/nodes', nodesRouter);
 
 app.use(bodyParser.json());
 app.use(

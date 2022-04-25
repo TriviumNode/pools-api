@@ -33,7 +33,7 @@ const keplrNodes = [
   ]
 
   const getNodeStatus = async(nodes) =>{
-    const results = { heighest_height: 0, nodes: {}};
+    const results = { highest_known_block: 0, nodes: {}};
     const promises = [];
     let resolves;
     let highest = 0;
@@ -88,7 +88,7 @@ const keplrNodes = [
             }
         }
     }
-    results.heighest_height = highest;
+    results.highest_known_block = highest;
     return results;
   }
 

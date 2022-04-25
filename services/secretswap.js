@@ -8,6 +8,8 @@ var request = require('request');
 const { queryInfo } = require('./secret.js')
 
 
+
+
 async function getMultiple(page = 1){
   const offset = helper.getOffset(page, config.listPerPage);
   const rows = await db.query(

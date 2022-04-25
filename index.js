@@ -7,10 +7,13 @@ var fs = require('fs');
 const path = require("path");
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const morgan = require("morgan");
+const { setupDb } = require('./services/db.js');
 
-require('dotenv').config()
+require('dotenv').config();
 
 //process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
+
+setupDb();
 
 const app = express();
 const port = process.env.PORT || 3176;
@@ -19,7 +22,6 @@ const poolsRouter = require('./routes/pools');
 const contractsRouter = require('./routes/contracts');
 const tokensRouter = require('./routes/tokens');
 const spyRouter = require('./routes/spy');
-const fixupRouter = require('./routes/fixup');
 
 const helmet = require('helmet');
 
@@ -51,7 +53,6 @@ app.use('/pools', poolsRouter);
 app.use('/contracts', contractsRouter);
 app.use('/tokens', tokensRouter);
 app.use('/spytokens', spyRouter);
-app.use('/adminfix', fixupRouter);
 
 app.use(bodyParser.json());
 app.use(

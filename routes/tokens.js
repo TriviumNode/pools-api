@@ -1,9 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const tokens = require('../services/tokens');
-const { CosmWasmClient } = require("secretjs");
-
-const queryJs = new CosmWasmClient(process.env.REST_URL);
 
 /* GET tokens. */
 router.get('/', async function(req, res, next) {

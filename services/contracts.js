@@ -23,33 +23,36 @@ async function getMultiple(page = 1){
   }
 }
 
-async function getSingle(input, queryJs){
-      const rows = await db.query(
-        `Select id, address, label, code_id, creator, name
+async function getSingle(input){
+    //query DB for contract
+    const rows = await db.query(
+        `Select id, address, label, code_id, code_hash, name, creator
         from contracts
         where address like ?`,
         [input]
-      );
-      const data = helper.emptyOrRows(rows);
+    );
+    const data = helper.emptyOrRows(rows);
 
-      if (data.length){
+    //return DB data if found
+    if (data.length){
         return {
-          data
+            data
         }
-      }
+    }
 
-      const res = await queryInfo(input, queryJs);
-      console.log(res);
-      return {
+    //otherwise get data from chain
+    const res = await queryInfo(input);
+    return {
         data: res
-      }
+    }
+
+    //todo: handle errors??
 /*
       if ( data.length === 0 ) {
           var returnEr = {'message': 'unknown_input'};
           return(returnEr);
       }
       */
-
 
 }
 

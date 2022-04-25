@@ -33,8 +33,10 @@ const keplrNodes = [
   ]
 
   const getNodeStatus = async(nodes) =>{
-    const results = {};
+    const results = { heighest_height: 0, nodes: {}};
     const promises = [];
+    let resolves;
+    let highest = 0;
 
     for (let i=0; i < nodes.length; i++){
         const rpc = nodes[i];
@@ -49,7 +51,6 @@ const keplrNodes = [
         }
     }
 
-    let resolves
     try {
         resolves = await Promise.all(promises);
     }
@@ -62,14 +63,32 @@ const keplrNodes = [
         if (single.data){
             try {
                 const {data: { result: {node_info: {moniker}, sync_info: {latest_block_height}}}} = single;
-                console.log(moniker, latest_block_height);
-                results[moniker] = latest_block_height;
+                if (parseInt(latest_block_height) > highest) highest = parseInt(latest_block_height);
+                console.log(moniker, parseInt(latest_block_height));
+                results.nodes[moniker] = {}
+                results.nodes[moniker]['height'] = parseInt(latest_block_height);
             }
             catch (error) {
                 console.log(`Error processing result`, error)
             }
         }
     }
+
+    for (let i=0; i < resolves.length; i++){
+        const single = resolves[i];
+        if (single.data){
+            try {
+                const {data: { result: {node_info: {moniker}, sync_info: {latest_block_height}}}} = single;
+                const behind = highest - parseInt(latest_block_height)
+                console.log(moniker, parseInt(latest_block_height), behind);
+                results.nodes[moniker]['behind'] = behind;
+            }
+            catch (error) {
+                console.log(`Error processing result`, error)
+            }
+        }
+    }
+    results.heighest_height = highest;
     return results;
   }
 

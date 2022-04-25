@@ -1,5 +1,7 @@
 const axios = require('axios');
 
+const controlNode = 'https://rpc.roninventures.io/status';
+
 const keplrNodes = [
     // 'http://:26657/status', keplr-01
     'http://96.47.236.238:26657/status',
@@ -33,16 +35,28 @@ const keplrNodes = [
   ]
 
   const getNodeStatus = async(nodes) =>{
-    const results = { highest_known_block: 0, nodes: {}};
+    const results = {
+        status: "Normal",
+        highest_known_block: 0,
+        nodes_online: 0,
+        nodes_behind: 0,
+        nodes: {}};
     const promises = [];
     let resolves;
     let highest = 0;
 
+    let nodesBehind = 0;
+    let totalNodes = 0;
+
+    //add control node request first
+    promises.push(axios.get(controlNode).catch(error => { return error }))
+
+    //add requests for all nodes
     for (let i=0; i < nodes.length; i++){
         const rpc = nodes[i];
         try {
             //const {data: { result: {node_info: {moniker}, sync_info: {latest_block_height}}}} = await axios.get(rpc);
-            promises.push(axios.get(rpc).catch(error => { return error }),)
+            promises.push(axios.get(rpc).catch(error => { return error }))
             //console.log(moniker, latest_block_height);
             //results[moniker] = latest_block_height;
         }
@@ -51,6 +65,7 @@ const keplrNodes = [
         }
     }
 
+    //process requests simultaneously
     try {
         resolves = await Promise.all(promises);
     }
@@ -58,11 +73,25 @@ const keplrNodes = [
         console.log(`Error resolving promises.`, error)
     }
 
+    // process and remove control node response
+    if (resolves[0].data){
+        try{
+            const {data: { result: {node_info: {moniker}, sync_info: {latest_block_height}}}} = resolves[0];
+            if (parseInt(latest_block_height) > highest) highest = parseInt(latest_block_height);
+            console.log("Control: ", moniker, parseInt(latest_block_height));
+        } catch(error){
+            console.log(`Error processing control result`, error)
+        }
+    }
+    resolves.shift();
+
+    //process other responses
     for (let i=0; i < resolves.length; i++){
         const single = resolves[i];
         if (single.data){
             try {
                 const {data: { result: {node_info: {moniker}, sync_info: {latest_block_height}}}} = single;
+                totalNodes++
                 if (parseInt(latest_block_height) > highest) highest = parseInt(latest_block_height);
                 console.log(moniker, parseInt(latest_block_height));
                 results.nodes[moniker] = {}
@@ -74,6 +103,7 @@ const keplrNodes = [
         }
     }
 
+    //determine which nodes are behind and how much
     for (let i=0; i < resolves.length; i++){
         const single = resolves[i];
         if (single.data){
@@ -82,13 +112,25 @@ const keplrNodes = [
                 const behind = highest - parseInt(latest_block_height)
                 console.log(moniker, parseInt(latest_block_height), behind);
                 results.nodes[moniker]['behind'] = behind;
+
+                if (behind > 15) {
+                    nodesBehind++
+                }
             }
             catch (error) {
                 console.log(`Error processing result`, error)
             }
         }
     }
+
+    //update overall stats
+    results.nodes_online = totalNodes;
+    results.nodes_behind = nodesBehind;
     results.highest_known_block = highest;
+
+    if (nodesBehind > 0) results.status = "Degraded"; // Consider cluster degraded if any nodes are more than 15 blocks behind.
+    if (nodesBehind/totalNodes > 0.75) results.status = "Down"; // Consider cluster down if 75% of nodes are behind
+
     return results;
   }
 

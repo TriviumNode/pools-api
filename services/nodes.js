@@ -31,10 +31,13 @@ const keplrNodes = [
     'http://66.85.137.179:26657/status',
     'http://66.85.137.180:36657/status',
     'http://66.85.137.181:46657/status',
-    'http://174.138.172.52:3657/status'
+    'http://174.138.172.52:3657/status',
+    'http://66.85.149.162:26657/status',
+    'http://66.85.149.162:36657/status',
+    'http://66.85.149.162:46657/status'
   ]
 
-  const getNodeStatus = async(nodes) =>{
+  const getNodeStatus = async(nodes, syncingIsInPool) =>{
     const results = {
         status: "Normal",
         highest_known_block: 0,
@@ -90,10 +93,11 @@ const keplrNodes = [
         const single = resolves[i];
         if (single.data){
             try {
-                const {data: { result: {node_info: {moniker}, sync_info: {latest_block_height}}}} = single;
-                totalNodes++
+                const {data: { result: {node_info: {moniker}, sync_info: {latest_block_height, catching_up}}}} = single;
+                //add to total nodes count if (NOT fast-syncing) OR (fast-syncing AND syncing nodes ARE in the cluster)
+                if (!catching_up || (catching_up && syncingIsInPool)) totalNodes++
+
                 if (parseInt(latest_block_height) > highest) highest = parseInt(latest_block_height);
-                console.log(moniker, parseInt(latest_block_height));
                 results.nodes[moniker] = {}
                 results.nodes[moniker]['height'] = parseInt(latest_block_height);
             }
@@ -108,13 +112,16 @@ const keplrNodes = [
         const single = resolves[i];
         if (single.data){
             try {
-                const {data: { result: {node_info: {moniker}, sync_info: {latest_block_height}}}} = single;
+                const {data: { result: {node_info: {moniker}, sync_info: {latest_block_height, catching_up}}}} = single;
                 const behind = highest - parseInt(latest_block_height)
-                console.log(moniker, parseInt(latest_block_height), behind);
                 results.nodes[moniker]['behind'] = behind;
 
+                //add to behind nodes count if more than 15 blocks behind AND (NOT fast-sycing OR(fast-syncing AND syncing nodes are in the cluster))
                 if (behind > 15) {
-                    nodesBehind++
+                    results.nodes[moniker]['catching_up'] = catching_up;
+                    if (!catching_up || (catching_up && syncingIsInPool)) {
+                        nodesBehind++
+                    }
                 }
             }
             catch (error) {

@@ -5,7 +5,7 @@ const nodes = require('../services/nodes');
 /* GET tokens. */
 router.get('/keplr', async function(req, res, next) {
   try {
-    res.json(await nodes.getNodeStatus(nodes.keplrNodes));
+    res.json(await nodes.getNodeStatus(nodes.keplrNodes, true));
   } catch (err) {
     console.error(`Error while getting node statuses `, err.message);
     next(err);
@@ -14,7 +14,7 @@ router.get('/keplr', async function(req, res, next) {
 
 router.get('/trivium', async function(req, res, next) {
   try {
-    res.json(await nodes.getNodeStatus(nodes.triviumNodes));
+    res.json(await nodes.getNodeStatus(nodes.triviumNodes, false));
   } catch (err) {
     console.error(`Error while getting node statuses `, err.message);
     next(err);

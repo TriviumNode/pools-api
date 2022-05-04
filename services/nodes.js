@@ -1,6 +1,7 @@
 const axios = require('axios');
 
-const controlNode = 'https://rpc.roninventures.io/status';
+const controlNodeSecret = 'https://rpc.roninventures.io/status';
+const controlNodePulsar = 'http://40.88.137.151:26657/status';
 
 const keplrNodes = [
     // 'http://:26657/status', keplr-01
@@ -37,7 +38,34 @@ const keplrNodes = [
     'http://66.85.149.162:46657/status'
   ]
 
-  const getNodeStatus = async(nodes, syncingIsInPool) =>{
+  const siennaNodes = [
+      'http://96.44.142.234:26657/status', //1
+      'http://96.44.142.238:26657/status', //2
+      'http://96.44.143.34:26657/status', //3
+      // 'http://:26657/status',
+      'http://96.44.143.194:26657/status', //sienna-node-5
+      // 'http://:26657/status',
+      'http://96.44.145.138:26657/status', //7
+      'http://96.44.145.142:26657/status', //8
+      'http://96.44.145.202:26657/status', //9
+      'http://96.44.145.206:26657/status' //10
+
+
+  ]
+
+  const pulsarNodes = [
+    'http://20.127.18.96:26657/status', //scrtlabs1
+    'http://40.88.137.151:26657/status',//slabs-validator
+    'http://20.116.58.47:26657/status', //uo2vKPgA2y
+    'http://20.83.213.250:26657/status', //foundry-test
+    'http://144.202.126.98:26657/status', //Secure Secrets
+    'http://108.62.104.102:26657/status', //nanas_forever
+    'http://20.104.227.233:26657/status', //zQdqfTSyy5
+    'http://108.59.1.107:26657/status', //sod-coconut
+    'http://52.190.249.47:26657/status', //baedrik
+]
+
+  const getNodeStatus = async(nodes, controlNode) =>{
     const results = {
         status: "Normal",
         highest_known_block: 0,
@@ -57,9 +85,10 @@ const keplrNodes = [
     //add requests for all nodes
     for (let i=0; i < nodes.length; i++){
         const rpc = nodes[i];
+        console.log(rpc)
         try {
             //const {data: { result: {node_info: {moniker}, sync_info: {latest_block_height}}}} = await axios.get(rpc);
-            promises.push(axios.get(rpc).catch(error => { return error }))
+            promises.push(axios.get(rpc, { timeout: 3000 }).catch(error => { return error }))
             //console.log(moniker, latest_block_height);
             //results[moniker] = latest_block_height;
         }
@@ -104,6 +133,8 @@ const keplrNodes = [
             catch (error) {
                 console.log(`Error processing result`, error)
             }
+        } else {
+            //console.log(single);
         }
     }
 
@@ -144,5 +175,9 @@ const keplrNodes = [
   module.exports = {
     keplrNodes,
     triviumNodes,
+    siennaNodes,
+    pulsarNodes,
+    controlNodeSecret,
+    controlNodePulsar,
     getNodeStatus
   }

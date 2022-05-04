@@ -21,21 +21,22 @@ const keplrNodes = [
     'http://96.44.144.6:26657/status',
     'http://96.44.144.38:26657/status',
     'http://96.44.144.186:26657/status',
-    'http://20.63.36.149:26657/status'
+    'http://20.63.36.149:26657/status', //power-query
+    'http://85.237.192.230:26657/status' //secret-rpc-a.consensus.one
   ]
   
   const triviumNodes = [
     'http://66.85.135.35:26657/status',
-    'http://66.85.135.36:36657/status',
-    'http://66.85.135.37:46657/status',
-    'http://66.85.135.38:56657/status',
+    'http://66.85.135.36:26657/status',
+    'http://66.85.135.37:26657/status',
+    'http://66.85.135.38:26657/status',
     'http://66.85.137.179:26657/status',
-    'http://66.85.137.180:36657/status',
-    'http://66.85.137.181:46657/status',
-    'http://174.138.172.52:3657/status',
+    'http://66.85.137.180:26657/status',
+    'http://66.85.137.181:26657/status',
+    'http://174.138.172.52:26657/status',
     'http://66.85.149.162:26657/status',
-    'http://66.85.149.162:36657/status',
-    'http://66.85.149.162:46657/status'
+    'http://66.85.149.163:26657/status',
+    'http://66.85.149.164:26657/status'
   ]
 
   const siennaNodes = [
@@ -65,7 +66,7 @@ const keplrNodes = [
     'http://52.190.249.47:26657/status', //baedrik
 ]
 
-  const getNodeStatus = async(nodes, controlNode) =>{
+  const getNodeStatus = async(nodes, controlNode, syncingIsInPool) =>{
     const results = {
         status: "Normal",
         highest_known_block: 0,
@@ -85,7 +86,6 @@ const keplrNodes = [
     //add requests for all nodes
     for (let i=0; i < nodes.length; i++){
         const rpc = nodes[i];
-        console.log(rpc)
         try {
             //const {data: { result: {node_info: {moniker}, sync_info: {latest_block_height}}}} = await axios.get(rpc);
             promises.push(axios.get(rpc, { timeout: 3000 }).catch(error => { return error }))

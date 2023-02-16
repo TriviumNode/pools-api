@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const controlNodeSecret = 'https://rpc.roninventures.io/status';
+const controlNodeSecret = 'https://rpc.scrt.network/status';
 const controlNodePulsar = 'http://40.88.137.151:26657/status';
 
 const keplrNodes = [
@@ -33,10 +33,19 @@ const keplrNodes = [
     'http://66.85.137.179:26657/status',
     'http://66.85.137.180:26657/status',
     'http://66.85.137.181:26657/status',
+    'http://174.138.172.51:26657/status',
     'http://174.138.172.52:26657/status',
     'http://66.85.149.162:26657/status',
     'http://66.85.149.163:26657/status',
-    'http://66.85.149.164:26657/status'
+    'http://66.85.149.164:26657/status',
+    'http://66.85.149.165:26657/status',
+    'http://131.153.202.109:26657/status',
+    'http://131.153.57.226:26657/status',
+    'http://131.153.57.227:26657/status',
+    'http://131.153.57.228:26657/status',
+    'http://131.153.175.90:26657/status',
+    'http://131.153.175.91:26657/status',
+    'http://131.153.175.92:26657/status',
   ]
 
   const siennaNodes = [

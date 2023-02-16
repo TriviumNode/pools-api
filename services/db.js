@@ -40,13 +40,13 @@ async function createContractsTable() {
 }
 
 async function setupDb() {
-  createContractsTable();
+  // createContractsTable();
 }
 
 
 
 module.exports = {
-  query,
+  // query,
   //pquery,
   pool,
   setupDb

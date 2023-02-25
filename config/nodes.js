@@ -3,8 +3,8 @@ const controlNodeSecret = 'https://rpc.scrt.network/status';
 const controlNodePulsar = 'http://40.88.137.151:26657/status';
   
 const triviumNodes = [
-    'http://66.85.137.179:26657/status', // tpn02-node01
-    'http://66.85.137.180:26657/status', // tpn02-node02
+    // 'http://66.85.137.179:26657/status', // tpn02-node01
+    // 'http://66.85.137.180:26657/status', // tpn02-node02
 
     'http://174.138.172.51:26657/status', // anode01-node01
     'http://174.138.172.52:26657/status', // anode01-node01

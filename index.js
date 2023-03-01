@@ -2,12 +2,10 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 var http = require('http');
-var https = require('https');
-var fs = require('fs');
-const path = require("path");
-const { createProxyMiddleware } = require('http-proxy-middleware');
 const morgan = require("morgan");
 const { setupDb } = require('./services/db.js');
+const { checkDiskSpace } = require('./services/metrics.js');
+const { endpoints } = require('./config/node_exporter');
 
 require('dotenv').config();
 
@@ -63,29 +61,14 @@ app.use(
   })
 );
 
-
 app.get('/', (req, res) => {
   res.json({'message': 'ok'});
 })
 
-//app.listen(port, () => {
-//  console.log(`Example app listening at http://localhost:${port}`)
-//});
-
 http.createServer(app).listen(port);
 console.log(`Example app listening at http://localhost:${port}`)
 
-if (process.env.USE_SSL === 'true'){
-  console.log(process.env.USE_SSL)
-  var sslOptions = {
-    key: fs.readFileSync(path.resolve(__dirname, "./key.pem")),
-    cert: fs.readFileSync(path.resolve(__dirname, "./cert.pem"))
-  };
-  https.createServer(sslOptions, app).listen(sslPort);
-  console.log(`Example app listening at http://localhost:${sslPort}`)
-}
-
-
-
+const intervalFreeSpace = () => checkDiskSpace(endpoints)
+setInterval(intervalFreeSpace, 1_800_000); //check every 30 minutes
 
 module.exports = app;

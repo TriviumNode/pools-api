@@ -1,6 +1,6 @@
 const axios = require('axios');
 const { Webhook } = require('discord-webhook-node');
-const hook = new Webhook(process.env.webhook);
+const hook = new Webhook(process.env.WEBHOOK);
 
 const getNodeStatus = async(nodes, controlNode, syncingIsInPool, alert=false) =>{
     const results = {

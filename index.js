@@ -7,6 +7,8 @@ const { setupDb } = require('./services/db.js');
 const { checkDiskSpace } = require('./services/metrics.js');
 const { endpoints } = require('./config/node_exporter');
 
+const { SYSTEM_CHECK_INTERVAL } = require('./config/intervals');
+
 require('dotenv').config();
 
 //process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
@@ -69,6 +71,6 @@ http.createServer(app).listen(port);
 console.log(`Example app listening at http://localhost:${port}`)
 
 const intervalFreeSpace = () => checkDiskSpace(endpoints)
-setInterval(intervalFreeSpace, 1_800_000); //check every 30 minutes
+setInterval(intervalFreeSpace, SYSTEM_CHECK_INTERVAL); //check every 30 minutes
 
 module.exports = app;

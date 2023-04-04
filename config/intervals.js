@@ -1,0 +1,7 @@
+const TENDERMINT_CHECK_INTERVAL = 300_000; //5 minutes
+const SYSTEM_CHECK_INTERVAL = 1_800_000; //30 minutes
+
+module.exports = {
+    TENDERMINT_CHECK_INTERVAL,
+    SYSTEM_CHECK_INTERVAL,
+}

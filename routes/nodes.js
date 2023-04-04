@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { triviumNodes, pulsarNodes, controlNodeSecret, controlNodePulsar } = require('../config/nodes');
 const { getNodeStatus } = require('../services/nodes')
+const { TENDERMINT_CHECK_INTERVAL } = require('../config/intervals')
 
 router.get('/trivium', async function(req, res, next) {
   try {
@@ -27,7 +28,7 @@ router.get('/', (req, res) => {
 
 const intervalSecret = () => getNodeStatus(triviumNodes, controlNodeSecret, false, true)
 
-setInterval(intervalSecret, 300_000);
+setInterval(intervalSecret, TENDERMINT_CHECK_INTERVAL);
 
 
 module.exports = router;

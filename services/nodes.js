@@ -1,39 +1,35 @@
 const axios = require('axios');
 const { Webhook } = require('discord-webhook-node');
 const hook = new Webhook(process.env.WEBHOOK);
+const { control_nodes } = require('../config/nodes');
 
-const getNodeStatus = async(nodes, controlNode, syncingIsInPool, alert=false) =>{
+const getNodeStatus = async(nodes, syncingIsInPool, alert=false) =>{
     const results = {
-        status: "Normal",
-        highest_known_block: 0,
+        highest_known_blocks: {},
         nodes_online: 0,
         nodes_behind: 0,
         nodes: {}};
     const promises = [];
+    const networks = [];
+    const highest_heights = {};
     let resolves;
-    let highest = 0;
 
     let nodesBehind = 0;
     let totalNodes = 0;
 
-    //add control node request first
-    promises.push(axios.get(controlNode).catch(error => { return error }))
-
-    //add requests for all nodes
+    // Add pending promises for all nodes to run in parallel
     for (let i=0; i < nodes.length; i++){
-        const rpc = nodes[i];
+        const node = nodes[i];
+        const rpc = node.rpc ? `${node.rpc}/status` : node; //backwards compatability, although meh at this point
         try {
-            //const {data: { result: {node_info: {moniker}, sync_info: {latest_block_height}}}} = await axios.get(rpc);
             promises.push(axios.get(rpc, { timeout: 3000 }).catch(error => { return error }))
-            //console.log(moniker, latest_block_height);
-            //results[moniker] = latest_block_height;
         }
         catch (error) {
             console.log(`Error fetching ${rpc}`, error)
         }
     }
 
-    //process requests simultaneously
+    // Process requests simultaneously
     try {
         resolves = await Promise.all(promises);
     }
@@ -41,52 +37,102 @@ const getNodeStatus = async(nodes, controlNode, syncingIsInPool, alert=false) =>
         console.log(`Error resolving promises.`, error)
     }
 
-    // process and remove control node response
-    if (resolves[0].data){
-        try{
-            const {data: { result: {node_info: {moniker}, sync_info: {latest_block_height}}}} = resolves[0];
-            if (parseInt(latest_block_height) > highest) highest = parseInt(latest_block_height);
-            console.log("Control: ", moniker, parseInt(latest_block_height));
-        } catch(error){
-            console.log(`Error processing control result`, error)
-        }
-    }
-    resolves.shift();
-
-    //process other responses
+    // Process responses
     for (let i=0; i < resolves.length; i++){
         const single = resolves[i];
+        const nodeName = nodes[i].name ? nodes[i].name : undefined
+
         if (single.data){
             try {
-                const {data: { result: {node_info: {moniker}, sync_info: {latest_block_height, catching_up}}}} = single;
+                const {
+                    data: {
+                        result: {
+                            node_info: {
+                                moniker,
+                                network
+                            },
+                            sync_info: {
+                                latest_block_height,
+                                catching_up
+                            }
+                        }
+                    }
+                } = single;
+
+                if (!networks.includes(network)) networks.push(network);
+
                 //add to total nodes count if (NOT fast-syncing) OR (fast-syncing AND syncing nodes ARE in the cluster)
                 if (!catching_up || (catching_up && syncingIsInPool)) totalNodes++
 
-                if (parseInt(latest_block_height) > highest) highest = parseInt(latest_block_height);
-                results.nodes[moniker] = {}
-                results.nodes[moniker]['height'] = parseInt(latest_block_height);
+                if (parseInt(latest_block_height) > (highest_heights[network] || 0)) highest_heights[network] = parseInt(latest_block_height);
+
+                results.nodes[nodeName || moniker] = {}
+                results.nodes[nodeName || moniker]['height'] = parseInt(latest_block_height);
             }
             catch (error) {
                 console.log(`Error processing result`, error)
             }
         } else {
-            if (alert) hook.send(`Failed to query node ${single.config.url} with error code ${single.code}`);
+            if (alert) hook.send(`Failed to query node ${nodeName ? `\`${nodeName}\` at` : ''} ${single.config.url} with error code \`${single.code}\``);
+        }
+    }
+
+    // Get control nodes
+    const controlPromises = []
+    for (let i=0; i < networks.length; i++){
+        const network = networks[i];
+        const controlRpc = control_nodes.find(n=>n.chain === network)?.rpc;
+        if (controlRpc) {
+            controlPromises.push(axios.get(`${controlRpc}/status`, { timeout: 3000 }).catch(error => { return error }))
+        }
+    }
+    let controlResults;
+    try {
+        controlResults = await Promise.all(controlPromises);
+    }
+    catch (error) {
+        console.log(`Error resolving control promises.`, error)
+    }
+    for (let i=0; i < controlResults.length; i++){
+        const controlResponse = controlResults[i];
+        if (controlResponse.data){
+            try {
+                const {
+                    data: {
+                        result: {
+                            node_info: { moniker, network },
+                            sync_info: { latest_block_height }
+                        }
+                    }
+                } = controlResponse;
+                
+                if (parseInt(latest_block_height) > (highest_heights[network] || 0)) highest_heights[network] = parseInt(latest_block_height);
+                console.log(`Control node ${moniker} on network ${network} is at height ${latest_block_height}`)
+            }
+            catch (error) {
+                console.log(`Error processing control result`, error)
+            }
         }
     }
 
     //determine which nodes are behind and how much
     for (let i=0; i < resolves.length; i++){
         const single = resolves[i];
+        const nodeName = nodes[i].name ? nodes[i].name : undefined
+
         if (single.data){
             try {
                 const {data: { result: {node_info: {moniker, network}, sync_info: {latest_block_height, catching_up}}}} = single;
-                const behind = highest - parseInt(latest_block_height)
-                results.nodes[moniker]['behind'] = behind;
+
+                const behind = highest_heights[network] - parseInt(latest_block_height)
+                results.nodes[nodeName || moniker]['behind'] = behind;
+
+                results.nodes[nodeName || moniker]['network'] = network;
 
                 //add to behind nodes count if more than 15 blocks behind AND (NOT fast-sycing OR(fast-syncing AND syncing nodes are in the cluster))
                 if (behind > 15) {
-                    if (alert) hook.send(`Node ${moniker} on ${network} is behind ${behind} blocks!`);
-                    results.nodes[moniker]['catching_up'] = catching_up;
+                    if (alert) hook.send(`Node ${nodeName ? `\`${nodeName}\` with moniker` : ''} \`${moniker}\` on \`${network}\` is behind ${behind} blocks!`);
+                    results.nodes[nodeName || moniker]['catching_up'] = catching_up;
                     if (!catching_up || (catching_up && syncingIsInPool)) {
                         nodesBehind++
                     }
@@ -101,10 +147,9 @@ const getNodeStatus = async(nodes, controlNode, syncingIsInPool, alert=false) =>
     //update overall stats
     results.nodes_online = totalNodes;
     results.nodes_behind = nodesBehind;
-    results.highest_known_block = highest;
+    results.highest_known_blocks = highest_heights;
 
-    if (nodesBehind > 0) results.status = "Degraded"; // Consider cluster degraded if any nodes are more than 15 blocks behind.
-    if (nodesBehind/totalNodes > 0.75) results.status = "Down"; // Consider cluster down if 75% of nodes are behind
+    console.log(highest_heights)
 
     return results;
 }

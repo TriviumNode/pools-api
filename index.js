@@ -4,10 +4,8 @@ const cors = require('cors');
 var http = require('http');
 const morgan = require("morgan");
 const { setupDb } = require('./services/db.js');
-const { checkDiskSpace } = require('./services/metrics.js');
-const { endpoints } = require('./config/node_exporter');
 
-const { SYSTEM_CHECK_INTERVAL } = require('./config/intervals');
+const { startIntervals } = require('./intervals');
 
 require('dotenv').config();
 
@@ -17,12 +15,8 @@ setupDb();
 
 const app = express();
 const port = process.env.PORT || 3176;
-const sslPort = process.env.SSLPORT || 3443;
-const poolsRouter = require('./routes/pools');
-const contractsRouter = require('./routes/contracts');
-const tokensRouter = require('./routes/tokens');
-const spyRouter = require('./routes/spy');
 const nodesRouter = require('./routes/nodes');
+const serversRouter = require('./routes/servers');
 
 const helmet = require('helmet');
 
@@ -50,11 +44,8 @@ app.use(cors({
   }
 }));
 
-app.use('/pools', poolsRouter);
-app.use('/contracts', contractsRouter);
-app.use('/tokens', tokensRouter);
-app.use('/spytokens', spyRouter);
 app.use('/nodes', nodesRouter);
+app.use('/servers', serversRouter);
 
 app.use(bodyParser.json());
 app.use(
@@ -70,7 +61,6 @@ app.get('/', (req, res) => {
 http.createServer(app).listen(port);
 console.log(`Example app listening at http://localhost:${port}`)
 
-const intervalFreeSpace = () => checkDiskSpace(endpoints)
-setInterval(intervalFreeSpace, SYSTEM_CHECK_INTERVAL); //check every 30 minutes
+startIntervals();
 
 module.exports = app;

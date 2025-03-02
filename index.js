@@ -14,7 +14,7 @@ require('dotenv').config();
 setupDb();
 
 const app = express();
-const port = process.env.PORT || 3176;
+const port = process.env.PORT || 3000;
 const nodesRouter = require('./routes/nodes');
 const serversRouter = require('./routes/servers');
 

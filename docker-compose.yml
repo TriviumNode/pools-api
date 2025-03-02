@@ -1,0 +1,11 @@
+services:
+  app:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    image: node-monitor
+    volumes:
+      - ./config:/app/config
+    ports:
+      - 3000:3000
+    restart: 'unless-stopped'

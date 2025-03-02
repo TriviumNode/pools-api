@@ -9,6 +9,8 @@ const { startIntervals } = require('./intervals');
 
 require('dotenv').config();
 
+if (!process.env.WEBHOOK) throw 'env.WEBHOOK is undefined';
+
 //process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 
 setupDb();
